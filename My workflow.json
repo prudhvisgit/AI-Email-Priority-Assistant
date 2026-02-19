@@ -1,0 +1,285 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {
+          "q": "label:INBOX -category:promotions -category:social"
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "73ab1c5f-0d28-498b-bdef-e0a7229a9923",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "LCklJx7JqobdvzG3",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "66af0eba-6be9-4a4c-982d-9d422b7b1ee9",
+              "name": "subject",
+              "value": "={{ $json.Subject }}",
+              "type": "string"
+            },
+            {
+              "id": "49415c5d-074b-4c4b-ace9-312d7d098d11",
+              "name": "body",
+              "value": "={{ $json.snippet }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "c6e39668-4da8-44fa-b9f2-185f7581c208",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze the Subject: {{ $json.subject }} and Body: {{ $json.body }}. Rate the priority from 1-10 based on business urgency. Output ONLY the JSON format provided.",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        416,
+        0
+      ],
+      "id": "561b81c6-9e8e-4cae-b7f4-66ff390dfcac",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"score\": {\n      \"type\": \"number\",\n      \"description\": \"Priority from 1 to 10\"\n    },\n    \"reason\": {\n      \"type\": \"string\",\n      \"description\": \"Brief explanation for the score\"\n    }\n  },\n  \"required\": [\"score\", \"reason\"]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        688,
+        304
+      ],
+      "id": "8380d947-91f7-4004-a03e-ba2f5fa53742",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        272,
+        208
+      ],
+      "id": "d7fff283-6e3e-463f-a6fd-a2d86c72755e",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "s8QhYHLa3zXzm6Pk",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "02069c4d-5b81-4e27-aee0-200f7b7ecb16",
+              "leftValue": "={{ $json.output.score }}",
+              "rightValue": 8,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": "",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        784,
+        0
+      ],
+      "id": "7a9f6712-4b94-45df-9f42-69ea69905821",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "chatId": "7328491429",
+        "text": "=Priority Alert!\nSubject: {{ $node[\"Edit Fields\"].json[\"subject\"] }}\nScore: {{ $json.output.score }}/10\nReason: {{ $json.output.reason }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        992,
+        0
+      ],
+      "id": "599f8ae8-6ab9-4189-8ab4-79bc6dab28cf",
+      "name": "Send a text message",
+      "webhookId": "a07e338f-b9cb-48b4-bdc7-9157c87a31ca",
+      "credentials": {
+        "telegramApi": {
+          "id": "EYl3JBRbzq6jqh1Y",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Gmail Trigger": [
+      {
+        "json": {
+          "id": "19c71ed129f99ff3",
+          "threadId": "19c71ed129f99ff3",
+          "snippet": "Manage motion, UI, &amp; brand assets in one system. Design Asset Management LottieFiles now goes beyond Lottie with all-new Digital Asset Management. Store images, design files, and motion assets in",
+          "payload": {
+            "mimeType": "multipart/alternative"
+          },
+          "sizeEstimate": 147103,
+          "historyId": "1216754",
+          "internalDate": "1771437887000",
+          "labels": [
+            {
+              "id": "INBOX",
+              "name": "INBOX"
+            },
+            {
+              "id": "CATEGORY_UPDATES",
+              "name": "CATEGORY_UPDATES"
+            },
+            {
+              "id": "UNREAD",
+              "name": "UNREAD"
+            }
+          ],
+          "From": "LottieFiles <hello@lottiefiles.com>",
+          "To": "mannemprudhvi08@gmail.com",
+          "Subject": "LottieFiles goes beyond Lottie 🚀"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "1be94414-3924-4703-8ded-9b8da45772ba",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "23c718b28abfd096f4944003286f9d3d9f312125f1f8af2398ec7c995d246673"
+  },
+  "id": "NzZBT7sDQdoc8Akg",
+  "tags": []
+}
